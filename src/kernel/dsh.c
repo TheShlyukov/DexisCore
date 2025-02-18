@@ -10,24 +10,37 @@ extern size_t terminal_column;
 #define PROMPT "dsh> "
 #define PROMPT_LEN (sizeof(PROMPT) - 1)
 
-static void refresh_input_line(const char *buffer, size_t buf_len, size_t cursor_pos) {
-    size_t row = terminal_row;
-    terminal_column = PROMPT_LEN;
-    terminal_update_cursor();
+static void refresh_input_line(const char *buffer, size_t buf_len, size_t cursor_pos, size_t start_row) {
+    size_t total_columns = PROMPT_LEN + buf_len;
+    size_t lines_needed = (total_columns + VGA_WIDTH - 1) / VGA_WIDTH;
     
-    for (size_t i = PROMPT_LEN; i < VGA_WIDTH; i++) {
-        vga_buffer[row * VGA_WIDTH + i] = vga_entry(' ', terminal_color);
+    for (size_t row = start_row; row < start_row + lines_needed+1; row++) {
+        for (size_t col = 0; col < VGA_WIDTH; col++) {
+            vga_buffer[row * VGA_WIDTH + col] = vga_entry(' ', terminal_color);
+        }
     }
     
+    size_t current_row = start_row;
+    size_t current_col = 0;
+    for (size_t i = 0; i < PROMPT_LEN; i++) {
+        vga_buffer[current_row * VGA_WIDTH + current_col] = vga_entry(PROMPT[i], terminal_color);
+        current_col++;
+    }
 
-    terminal_column = PROMPT_LEN;
-    terminal_update_cursor();
     for (size_t i = 0; i < buf_len; i++) {
-        vga_buffer[row * VGA_WIDTH + terminal_column] = vga_entry(buffer[i], terminal_color);
-        terminal_column++;
+        if (current_col >= VGA_WIDTH) {
+            current_row++;
+            current_col = 0;
+        }
+        vga_buffer[current_row * VGA_WIDTH + current_col] = vga_entry(buffer[i], terminal_color);
+        current_col++;
     }
-    
-    terminal_column = PROMPT_LEN + cursor_pos;
+
+    size_t absolute_pos = PROMPT_LEN + cursor_pos;
+    current_row = start_row + (absolute_pos / VGA_WIDTH);
+    current_col = absolute_pos % VGA_WIDTH;
+    terminal_row = current_row;
+    terminal_column = current_col;
     terminal_update_cursor();
 }
 
@@ -311,6 +324,10 @@ static void read_line(char *buffer, size_t buffer_size) {
     int current_repeat_delay = INITIAL_REPEAT_DELAY;
     int enter_pressed = 0;
 
+    size_t start_row = terminal_row;
+
+    start_row = terminal_row;
+
     buffer[0] = '\0';
 
     while (1) {
@@ -351,27 +368,27 @@ static void read_line(char *buffer, size_t buffer_size) {
         if (sc == 0x4B) {  // Arrow Left
             if (cursor_pos > 0) {
                 cursor_pos--;
-                refresh_input_line(buffer, index, cursor_pos);
+                refresh_input_line(buffer, index, cursor_pos, start_row);
             }
             continue;
         }
         if (sc == 0x4D) {  // Arrow Right
             if (cursor_pos < index) {
                 cursor_pos++;
-                refresh_input_line(buffer, index, cursor_pos);
+                refresh_input_line(buffer, index, cursor_pos, start_row);
             }
             continue;
         }
         // Home (0x47) – moving the cursor to the beginning of the line (cursor_pos = 0)
         if (sc == 0x47) {
             cursor_pos = 0;
-            refresh_input_line(buffer, index, cursor_pos);
+            refresh_input_line(buffer, index, cursor_pos, start_row);
             continue;
         }
         // End (0x4F) – moving the cursor to the end of the line (cursor_pos = index)
         if (sc == 0x4F) {
             cursor_pos = index;
-            refresh_input_line(buffer, index, cursor_pos);
+            refresh_input_line(buffer, index, cursor_pos, start_row);
             continue;
         }
         if (sc == 0x48) {  // Arrow Up
@@ -387,7 +404,7 @@ static void read_line(char *buffer, size_t buffer_size) {
                 terminal_write(buffer);
                 index = dex_strlen(buffer);
                 cursor_pos = index;
-                refresh_input_line(buffer, index, cursor_pos);
+                refresh_input_line(buffer, index, cursor_pos, start_row);
             }
             continue;
         }
@@ -410,7 +427,7 @@ static void read_line(char *buffer, size_t buffer_size) {
                     index = 0;
                     cursor_pos = 0;
                 }
-                refresh_input_line(buffer, index, cursor_pos);
+                refresh_input_line(buffer, index, cursor_pos, start_row);
             }
             continue;
         }
@@ -431,7 +448,7 @@ static void read_line(char *buffer, size_t buffer_size) {
                 }
                 index--; 
                 cursor_pos--;
-                refresh_input_line(buffer, index, cursor_pos);
+                refresh_input_line(buffer, index, cursor_pos, start_row);
             }
         } else {
             if (index < buffer_size - 1) {
@@ -450,7 +467,7 @@ static void read_line(char *buffer, size_t buffer_size) {
                     cursor_pos++;
                 }
                 buffer[index] = '\0';
-                refresh_input_line(buffer, index, cursor_pos);
+                refresh_input_line(buffer, index, cursor_pos, start_row);
             }
         }
         delay(10000);
@@ -485,7 +502,7 @@ static void execute_command(const char *cmd) {
         return;
     }
     if (string_equal(cmd, "sysabout")) {
-        terminal_write("\ndsh (DexisShell) v0.1.0\n");
+        terminal_write("\ndsh (DexisShell) v0.0.1\n");
         terminal_write("Author: ShLKV (The Shlyukov)\n");
         terminal_write("License: MIT\n");
         terminal_write("https://github.com/TheShlyukov/DexisCore");
