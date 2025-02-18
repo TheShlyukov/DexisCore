@@ -502,7 +502,7 @@ static void execute_command(const char *cmd) {
         return;
     }
     if (string_equal(cmd, "sysabout")) {
-        terminal_write("\ndsh (DexisShell) v0.0.1\n");
+        terminal_write("\ndsh (DexisShell) v0.0.2\n");
         terminal_write("Author: ShLKV (The Shlyukov)\n");
         terminal_write("License: MIT\n");
         terminal_write("https://github.com/TheShlyukov/DexisCore");
@@ -531,7 +531,7 @@ static void execute_command(const char *cmd) {
 
 void dsh_run(void) {
     char buffer[DSH_BUFFER_SIZE];
-    terminal_write("\nRunning dsh (DexShell) v0.0.1\n");
+    terminal_write("\nRunning dsh (DexShell) v0.0.2\n");
     while (1) {
         terminal_write(PROMPT);
         read_line(buffer, DSH_BUFFER_SIZE);
