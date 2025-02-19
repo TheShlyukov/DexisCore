@@ -21,7 +21,7 @@ void terminal_update_cursor(void) {
 
 // Scroll the terminal up by one line
 static void terminal_scroll(void) {
-    // Смещаем все строки вверх на одну
+    // Moving strings up
     for (size_t y = 1; y < VGA_HEIGHT; y++) {
         for (size_t x = 0; x < VGA_WIDTH; x++) {
             vga_buffer[(y - 1) * VGA_WIDTH + x] = vga_buffer[y * VGA_WIDTH + x];
