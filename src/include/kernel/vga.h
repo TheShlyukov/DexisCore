@@ -41,6 +41,7 @@ void terminal_putchar(char c);
 void terminal_write(const char* str);
 void terminal_update_cursor(void);
 void terminal_enable_cursor(void);
+void terminal_setcolor(uint8_t color);
 
 /* Export the global variables used by the terminal editing code */
 extern volatile uint16_t* vga_buffer;
