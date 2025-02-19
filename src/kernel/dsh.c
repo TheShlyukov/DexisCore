@@ -9,6 +9,7 @@ extern size_t terminal_column;
 
 #define PROMPT "dsh> "
 #define PROMPT_LEN (sizeof(PROMPT) - 1)
+#define PROMPT_COLOR VGA_COLOR_LIGHT_BROWN
 
 static void refresh_input_line(const char *buffer, size_t buf_len, size_t cursor_pos, size_t start_row) {
     size_t total_columns = PROMPT_LEN + buf_len;
@@ -23,7 +24,7 @@ static void refresh_input_line(const char *buffer, size_t buf_len, size_t cursor
     size_t current_row = start_row;
     size_t current_col = 0;
     for (size_t i = 0; i < PROMPT_LEN; i++) {
-        vga_buffer[current_row * VGA_WIDTH + current_col] = vga_entry(PROMPT[i], terminal_color);
+        vga_buffer[current_row * VGA_WIDTH + current_col] = vga_entry(PROMPT[i], PROMPT_COLOR);
         current_col++;
     }
 
@@ -502,7 +503,10 @@ static void execute_command(const char *cmd) {
         return;
     }
     if (string_equal(cmd, "sysabout")) {
-        terminal_write("\ndsh (DexisShell) v0.0.2\n");
+        terminal_setcolor(VGA_COLOR_BROWN);
+        terminal_write("\nSystem Information:\n");
+        terminal_setcolor(VGA_COLOR_WHITE);
+        terminal_write("\ndsh (DexisShell) v0.0.3\n");
         terminal_write("Author: ShLKV (The Shlyukov)\n");
         terminal_write("License: MIT\n");
         terminal_write("https://github.com/TheShlyukov/DexisCore");
@@ -518,22 +522,40 @@ static void execute_command(const char *cmd) {
     }
     if (string_equal(cmd, "help")) {
         terminal_write("\nAvailable commands:\n");
+        terminal_setcolor(VGA_COLOR_LIGHT_GREEN);
+        terminal_write("==============\n");
+        terminal_setcolor(VGA_COLOR_WHITE);
         terminal_write("shutdown - shutdown system\n");
         terminal_write("reboot - reboot system\n");
         terminal_write("cleanup - clear terminal\n");
         terminal_write("sysabout - about system\n");
         terminal_write("echo - echo string\n");
-        terminal_write("help - available commands list\n\n");
+        terminal_write("help - available commands list\n");
+        terminal_setcolor(VGA_COLOR_LIGHT_GREEN);
+        terminal_write("==============\n\n");
+        terminal_setcolor(VGA_COLOR_WHITE);
         return;
     }
-    terminal_write("\nUnknown command!\nType 'help' for available commands list\n\n");
+    terminal_write("\nUnknown command!\n");
+    terminal_setcolor(VGA_COLOR_LIGHT_GREEN);
+    terminal_write("Type 'help' for available commands list\n\n");
+    terminal_setcolor(VGA_COLOR_WHITE);
+}
+
+void terminal_setcolor(uint8_t color) {
+    terminal_color = color;
 }
 
 void dsh_run(void) {
     char buffer[DSH_BUFFER_SIZE];
-    terminal_write("\nRunning dsh (DexShell) v0.0.2\n");
+    terminal_write("\nRunning dsh (DexShell) v0.0.3\n");
+    terminal_setcolor(VGA_COLOR_LIGHT_GREEN);
+    terminal_write("Type 'help' for available commands list\n\n");
+    terminal_setcolor(VGA_COLOR_WHITE);
     while (1) {
+        terminal_setcolor(PROMPT_COLOR);
         terminal_write(PROMPT);
+        terminal_setcolor(VGA_COLOR_WHITE);
         read_line(buffer, DSH_BUFFER_SIZE);
         execute_command(buffer);
     }
