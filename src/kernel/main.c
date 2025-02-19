@@ -10,7 +10,9 @@ static void serial_write(const char* str) {
 
 void kmain(void) {
     terminal_initialize(); // Initialize terminal
+    terminal_setcolor(VGA_COLOR_LIGHT_BLUE);
     terminal_write("*DexisCore v0.1*\n");
+    terminal_setcolor(VGA_COLOR_WHITE);
     terminal_write("Architecture: x86 (32bit)\n");
     serial_write("\nKernel loaded and running\n");
     dsh_run(); // Run the dsh shell
