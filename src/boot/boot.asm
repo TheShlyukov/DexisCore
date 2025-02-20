@@ -11,7 +11,7 @@ header_start:
     dd 8                   ; Size = 8
 header_end:
 
-; Entering 64-bit mode
+; Entering 32-bit mode
 section .text
 global _start
 _start:
